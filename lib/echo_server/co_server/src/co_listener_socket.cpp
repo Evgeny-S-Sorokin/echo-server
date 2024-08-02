@@ -9,7 +9,7 @@ namespace echo_servers
 {
 
 CoListenerSocket::CoListenerSocket(uint16_t port)
-    : instruments::CoSocket(instruments::Socket::CreateListeningSocket(port))
+    : instruments::Socket(instruments::Socket::CreateListeningSocket(port))
 {
     if (v_fd < 0)
     {
@@ -17,7 +17,7 @@ CoListenerSocket::CoListenerSocket(uint16_t port)
     }
 }
 
-int CoListenerSocket::OnEvent() noexcept
+int CoListenerSocket::PerformNextAction() noexcept
 {
     return accept();
 }
@@ -25,8 +25,7 @@ int CoListenerSocket::OnEvent() noexcept
 void CoListenerSocket::fillEpollEvent(epoll_event *newEvent) noexcept
 {
     newEvent->events = EPOLLIN;
-    newEvent->data.fd = getFd();
-    newEvent->data.ptr = v_handle.address();
+    newEvent->data.ptr = this;
 }
 
 } // namespace echo_servers

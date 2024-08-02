@@ -1,8 +1,10 @@
 #pragma once
 
-#include "co_instruments/co_socket.hpp"
-#include "co_server/co_server.hpp"
+#include "co_instruments/socket_awaiter.hpp"
+#include "co_instruments/co_socket_handle.hpp"
 #include "instruments/socket.hpp"
+
+#include "co_socket.hpp"
 
 #include <array>
 #include <cstring>
@@ -10,13 +12,19 @@
 namespace echo_servers
 {
 
-class CoRecvSocket final : public instruments::CoSocket
+class CoRecvSocket final
+    : public CoSocket
+    , public instruments::Socket
 {
 public:
     explicit CoRecvSocket(int fd, char* buffer, std::size_t bufferSize) noexcept;
     virtual ~CoRecvSocket() noexcept = default;
 
-    virtual int OnEvent() noexcept override;
+    virtual int IsNextActionReady() noexcept override
+    {
+        return PerformNextAction();
+    }
+    virtual int PerformNextAction() noexcept override;
     virtual void fillEpollEvent(epoll_event* newEvent) noexcept override;
 
 private:
@@ -26,13 +34,19 @@ private:
     std::coroutine_handle<> v_handle;
 };
 
-class CoSendSocket final : public instruments::CoSocket
+class CoSendSocket final
+    : public CoSocket
+    , public instruments::Socket
 {
 public:
     explicit CoSendSocket(int fd, char* buffer, std::size_t bufferSize) noexcept;
     virtual ~CoSendSocket() noexcept = default;
 
-    virtual int OnEvent() noexcept override;
+    virtual int IsNextActionReady() noexcept override
+    {
+        return PerformNextAction();
+    }
+    virtual int PerformNextAction() noexcept override;
     virtual void fillEpollEvent(epoll_event* newEvent) noexcept override;
 
 private:
@@ -48,6 +62,7 @@ public:
         : instruments::Socket(fd)
     {
         std::memset(v_buffer.data(), 0, v_buffer.size());
+        
     }
 
     CoRecvSocket receive()

@@ -8,12 +8,12 @@ namespace echo_servers
 {
 
 CoRecvSocket::CoRecvSocket(int fd, char* buffer, std::size_t bufferSize) noexcept
-    : instruments::CoSocket(fd)
+    : instruments::Socket(fd)
     , v_externalBufferPtr(buffer)
     , v_externalBufferLen(bufferSize)
 {}
 
-int CoRecvSocket::OnEvent()  noexcept
+int CoRecvSocket::PerformNextAction()  noexcept
 {
     return recv(v_externalBufferPtr, v_externalBufferLen);
 }
@@ -21,17 +21,16 @@ int CoRecvSocket::OnEvent()  noexcept
 void CoRecvSocket::fillEpollEvent(epoll_event *newEvent) noexcept
 {
     newEvent->events = EPOLLIN | EPOLLET;
-    newEvent->data.fd = getFd();
     newEvent->data.ptr = this;
 }
 
 CoSendSocket::CoSendSocket(int fd, char* buffer, std::size_t bufferSize) noexcept
-    : instruments::CoSocket(fd)
+    : instruments::Socket(fd)
     , v_externalBufferPtr(buffer)
     , v_externalBufferLen(bufferSize)
 {}
 
-int CoSendSocket::OnEvent()  noexcept
+int CoSendSocket::PerformNextAction()  noexcept
 {
     return send(v_externalBufferPtr, v_externalBufferLen);
 }
@@ -39,7 +38,6 @@ int CoSendSocket::OnEvent()  noexcept
 void CoSendSocket::fillEpollEvent(epoll_event *newEvent) noexcept
 {
     newEvent->events = EPOLLOUT | EPOLLET;
-    newEvent->data.fd = getFd();
     newEvent->data.ptr = this;
 }
 

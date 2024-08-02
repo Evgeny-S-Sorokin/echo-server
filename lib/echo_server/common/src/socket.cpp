@@ -18,10 +18,12 @@ Socket::Socket(int fd) noexcept
 
 Socket::~Socket() noexcept
 {
+    /*
     if (v_fd > 0)
     {
         close(v_fd);
     }
+    */
 }
 
 int Socket::accept() noexcept

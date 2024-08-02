@@ -1,7 +1,6 @@
 #pragma once
 
 #include "awaiter.hpp"
-#include "co_socket.hpp"
 
 #include <coroutine>
 #include <stdexcept>
@@ -22,20 +21,22 @@ public:
 
     std::optional<int> ShouldSuspend()
     {
-        auto tryBeforeSuspend = v_socket.OnEvent();
-        if (tryBeforeSuspend > 0 || (errno != EAGAIN && errno != EWOULDBLOCK))
+        auto tryBeforeSuspend = v_socket.IsNextActionReady();
+        if (tryBeforeSuspend > 0)
         {
             return tryBeforeSuspend;
         }
         return {};
     }
+
     void Suspend(std::coroutine_handle<> handle)
     { 
-        v_socket.WaitForEvent(handle); 
+        v_socket.SuspendNextAction(handle); 
     }
+
     int Resume() 
     { 
-        return v_socket.OnEvent();
+        return v_socket.PerformNextAction();
     }
 
 private:

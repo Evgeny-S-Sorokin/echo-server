@@ -1,5 +1,8 @@
 #include "base_server/epoll_server.hpp"
 
+#include <asm-generic/errno-base.h>
+#include <asm-generic/errno.h>
+#include <cerrno>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -26,18 +29,21 @@ bool EpollServer::SetupEpoll() noexcept
 
 int EpollServer::WaitOnEpoll(epoll_event* events) noexcept
 {
-    return epoll_wait(v_epollFd, events, c_MAX_EVENTS, -1);
+    std::cout << "Awaiting ...\n";
+    auto result = epoll_wait(v_epollFd, events, c_MAX_EVENTS, -1);
+    return result < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) ? 0 : result;
 }
 
-bool EpollServer::AddSocketToEpoll(epoll_event* event) noexcept
+bool EpollServer::AddSocketToEpoll(int fd, epoll_event* event) noexcept
 {
-    if (epoll_ctl(v_epollFd, EPOLL_CTL_ADD, event->data.fd, event) < 0)
+    if (epoll_ctl(v_epollFd, EPOLL_CTL_ADD, fd, event) < 0)
     {
-        std::cout << "Failed to add socket {" << event->data.fd << "} to epoll.\n"
+        std::cout << "Failed to add socket {" << fd << "} to epoll.\n"
             << "Errno: {" << errno << "}\n";
         return false;
     }
 
+    std::cout << "Socket {" << fd << "} added to epoll.\n";
     return true;
 }
 
