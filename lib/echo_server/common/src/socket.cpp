@@ -5,7 +5,6 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <unistd.h>
 
 namespace echo_servers
 {
@@ -15,16 +14,6 @@ namespace instruments
 Socket::Socket(int fd) noexcept
     : v_fd(fd)
 {}
-
-Socket::~Socket() noexcept
-{
-    /*
-    if (v_fd > 0)
-    {
-        close(v_fd);
-    }
-    */
-}
 
 int Socket::accept() noexcept
 {

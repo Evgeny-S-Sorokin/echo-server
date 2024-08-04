@@ -24,7 +24,6 @@ public:
     bool await_ready()
     {
         v_returnValue = static_cast<Suspended*>(this)->ShouldSuspend();
-        std::cout << "Should suspend {" << (v_returnValue ? "false" : "true") << "}\n";
         return v_returnValue.has_value();
     }
     

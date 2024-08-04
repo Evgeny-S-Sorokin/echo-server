@@ -55,30 +55,30 @@ private:
 };
 
 template<std::size_t BufferSize>
-class CoEchoSocket final : private instruments::Socket
+class CoEchoSocket final : public instruments::Socket
 {
 public:
     explicit CoEchoSocket(int fd) noexcept
         : instruments::Socket(fd)
+        , v_receiver(fd, v_buffer.data(), v_buffer.size())
     {
         std::memset(v_buffer.data(), 0, v_buffer.size());
-        
     }
 
-    CoRecvSocket receive()
+    CoRecvSocket& GetReceiverPart()
     {
-        return CoRecvSocket(v_fd, v_buffer.data(), v_buffer.size());
+        return v_receiver;
     }
 
-    CoSendSocket send(std::size_t dataLen)
+    CoSendSocket GetSenderPart(std::size_t dataLen)
     {
-        return CoSendSocket(v_fd,
-            v_buffer.data(),
-            std::min(v_buffer.size(), dataLen));
+        return CoSendSocket(v_fd, v_buffer.data(), dataLen);
     }
 
 private:
     std::array<char, BufferSize> v_buffer;
+
+    CoRecvSocket v_receiver;
 };
 
 } // namespace echo_servers

@@ -8,11 +8,10 @@
 
 #include <coroutine>
 #include <iostream>
-#include <vector>
+#include <unordered_map>
 
 #include <errno.h>
 #include <stdexcept>
-#include <sys/epoll.h>
 #include <unistd.h>
 
 namespace echo_servers
@@ -49,56 +48,64 @@ void CoServer::Run()
             static_cast<CoSocket*>(events[i].data.ptr)->ResumeNextAction();
         }
     }
-}
-
-template<class Socket>
-void CoServer::AddToEpoll(Socket& socket)
-{
-    std::cout << "Adding socket to epoll\n";
-    epoll_event newEvent;
-    socket.fillEpollEvent(&newEvent);
-    AddSocketToEpoll(socket.getFd(), &newEvent);
+    
 }
 
 instruments::CoListenTask CoServer::Listen()
 {
     CoListenerSocket listener(12555);
     AddToEpoll(listener);
-    std::vector<instruments::CoEchoTask> echoTasks;
     while (true)
     {
         auto newSocketFd 
             = co_await instruments::SocketAwaiter(listener);
         std::cout << "Accepted new connection on fd {" << newSocketFd << "}\n";
-        echoTasks.push_back(EchoRecv(newSocketFd));
+        co_await EchoRecv(newSocketFd);
+        close(newSocketFd);
+    }
+    /*
+    std::unordered_map<int, instruments::CoEchoTask> echoTasks;
+    while (true)
+    {
+        auto newSocketFd 
+            = co_await instruments::SocketAwaiter(listener);
+        std::cout << "Accepted new connection on fd {" << newSocketFd << "}\n";
+        echoTasks.insert_or_assign(newSocketFd,
+            std::move(EchoRecv(newSocketFd)));
         // TODO:: Memory handling
     }
+    */
 }
 
 instruments::CoEchoTask CoServer::EchoRecv(int fd)
 {
     bool continueRecv = true;
     CoEchoSocket<1024> echo(fd);
-    auto receiver = echo.receive();
+    auto& receiver = echo.GetReceiverPart();
     AddToEpoll(receiver);
     while (continueRecv)
     {
         auto dataRecv = co_await instruments::SocketAwaiter(receiver);
-        // TODO: Error handling
         auto dataSendTotal = 0;
-        std::cout << "Receveived [" << dataRecv << "] bytes\n";
-        auto sender = echo.send(dataRecv);
-        while (dataSendTotal < dataRecv)
+        std::cout << "Received [" << dataRecv << "] bytes\n";
+        if (dataRecv > 1)
         {
-            auto dataSend = co_await instruments::SocketAwaiter(sender);
-            // TODO: Error handling
-            dataSendTotal += dataSend;
-            std::cout << "Sent [" << dataSend << "] bytes\n";
+            auto sender = echo.GetSenderPart(dataRecv);
+            ModifyInEpoll(sender);
+            while (dataSendTotal < dataRecv)
+            {
+                auto dataSend 
+                    = co_await instruments::SocketAwaiter(sender);
+                // TODO: Error handling
+                dataSendTotal += dataSend;
+                std::cout << "Sent [" << dataSend << "] bytes\n";
+            }
+            ModifyInEpoll(receiver);
         }
-        // TODO: Handle echoSend deletion
-        continueRecv = (dataRecv != 0);
+        continueRecv = (dataRecv > 1);
     }
-    // TODO: Handle echoRecv deletion
+    RemoveFromEpoll(echo);
+    co_return;
 }
 
 } // namespace echo_servers

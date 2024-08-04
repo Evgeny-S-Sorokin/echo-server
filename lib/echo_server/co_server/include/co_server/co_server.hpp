@@ -8,6 +8,8 @@
 #include <array>
 #include <coroutine>
 
+#include <sys/epoll.h>
+
 namespace echo_servers
 {
 
@@ -26,8 +28,27 @@ private:
     bool v_run = true;
 
 private:
-    template<class Socket>
-    void AddToEpoll(Socket& socket);
+    template<typename FdWrapper>
+    void AddToEpoll(FdWrapper& fdWrapper) noexcept
+    {
+        epoll_event newEvent;
+        fdWrapper.fillEpollEvent(&newEvent);
+        AddFdToEpoll(fdWrapper.getFd(), &newEvent);
+    }
+
+    template<typename FdWrapper>
+    void ModifyInEpoll(FdWrapper& fdWrapper) noexcept
+    {
+        epoll_event modifiedEvent;
+        fdWrapper.fillEpollEvent(&modifiedEvent);
+        ModifyFdInEpoll(fdWrapper.getFd(), &modifiedEvent);
+    }
+
+    template<typename FdWrapper>
+    void RemoveFromEpoll(const FdWrapper& fdWrapper) noexcept
+    {
+        RemoveFdFromEpoll(fdWrapper.getFd());
+    }
 
     instruments::CoListenTask Listen();
     instruments::CoEchoTask EchoRecv(int fd);

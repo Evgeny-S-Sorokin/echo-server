@@ -18,7 +18,7 @@ class CoListenerSocket final
 {
 public:
     explicit CoListenerSocket(uint16_t port);
-    virtual ~CoListenerSocket() noexcept = default;
+    virtual ~CoListenerSocket() noexcept;
 
     virtual int IsNextActionReady() noexcept override 
     { 

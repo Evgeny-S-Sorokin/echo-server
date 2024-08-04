@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include <sys/epoll.h>
+#include <unistd.h>
 
 namespace echo_servers
 {
@@ -15,6 +16,11 @@ CoListenerSocket::CoListenerSocket(uint16_t port)
     {
         throw std::runtime_error("failed to create listening socket");
     }
+}
+
+CoListenerSocket::~CoListenerSocket() noexcept
+{
+    close(v_fd);
 }
 
 int CoListenerSocket::PerformNextAction() noexcept

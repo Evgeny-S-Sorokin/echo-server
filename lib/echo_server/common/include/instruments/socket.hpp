@@ -14,7 +14,7 @@ public:
 
 public:
     explicit Socket(int fd) noexcept;
-    virtual ~Socket() noexcept;
+    virtual ~Socket() noexcept = default;
     Socket(const Socket&) = delete;
     Socket& operator=(const Socket&) = delete;
 

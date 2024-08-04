@@ -26,7 +26,9 @@ protected:
     void ShutdownEpoll() noexcept;
 
     int WaitOnEpoll(epoll_event* events) noexcept;
-    bool AddSocketToEpoll(int fd, epoll_event* event) noexcept;
+    bool AddFdToEpoll(int fd, epoll_event* event) noexcept;
+    bool ModifyFdInEpoll(int fd, epoll_event* event) noexcept;
+    bool RemoveFdFromEpoll(int fd) noexcept;
 
 private:
     int v_epollFd = -1;
