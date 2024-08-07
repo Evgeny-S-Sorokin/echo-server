@@ -5,10 +5,7 @@
 #include "co_server/co_echo_socket.hpp"
 #include "co_server/co_listener_socket.hpp"
 
-#include <array>
 #include <coroutine>
-
-#include <sys/epoll.h>
 
 namespace echo_servers
 {

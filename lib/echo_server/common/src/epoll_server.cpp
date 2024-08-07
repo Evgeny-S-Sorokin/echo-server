@@ -1,14 +1,10 @@
 #include "base_server/epoll_server.hpp"
 
-#include <asm-generic/errno-base.h>
-#include <asm-generic/errno.h>
 #include <cerrno>
 #include <cstring>
-#include <iostream>
 #include <string>
 
 #include <unistd.h>
-#include <sys/epoll.h>
 
 namespace echo_servers
 {

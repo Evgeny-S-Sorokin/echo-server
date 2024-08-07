@@ -1,12 +1,11 @@
 #pragma once
 
 #include "co_server/co_listener_socket.hpp"
-#include <bits/utility.h>
+
 #include <coroutine>
 #include <exception>
 #include <iostream>
 #include <new>
-#include <tuple>
 
 namespace echo_servers
 {
@@ -24,7 +23,7 @@ struct CoListenTask
         void unhandled_exception() { std::terminate(); }
         CoListenTask get_return_object() 
         { 
-            return { .v_handle = handleType::from_promise(*this) }; 
+            return CoListenTask(handleType::from_promise(*this)); 
         }
         void return_void() {}
 
@@ -47,11 +46,19 @@ struct CoListenTask
     };
     using promise_type = CoListenTaskPromise;
 
+    explicit CoListenTask(std::coroutine_handle<> handle)
+        : v_handle(handle)
+    {}
+    CoListenTask(const CoListenTask&) = delete;
+    CoListenTask& operator=(const CoListenTask&) = delete;
+    CoListenTask(CoListenTask&&) = delete;
+    CoListenTask& operator=(CoListenTask&&) = delete;
     ~CoListenTask() noexcept
     {
         v_handle.destroy();
     }
 
+private:
     std::coroutine_handle<> v_handle = nullptr;
 };
 
@@ -70,7 +77,10 @@ struct CoEchoTask
 
             void await_suspend(handle_type endingHandle) noexcept 
             {
-                endingHandle.promise().v_awaitingHandle.resume();
+                if (endingHandle.promise().v_awaitingHandle)
+                {
+                    endingHandle.promise().v_awaitingHandle.resume();
+                }
             }
 
             void await_resume() noexcept {}
@@ -112,13 +122,28 @@ struct CoEchoTask
     {
         std::cout << "Echo task initialized...\n";
     }
+    CoEchoTask(CoEchoTask&& other)
+        : v_selfHandle(std::move(other.v_selfHandle))
+    {
+        other.v_selfHandle = nullptr;
+    }
+    CoEchoTask& operator=(CoEchoTask&& other)
+    {
+        v_selfHandle = std::move(other.v_selfHandle);
+        other.v_selfHandle = nullptr;
+        return *this;
+    }
     ~CoEchoTask() noexcept
     {
+        std::cout << "Echo task destroyed...\n";
         if (v_selfHandle)
         {
             v_selfHandle.destroy();
         }
     }
+
+    CoEchoTask(const CoEchoTask&) = delete;
+    CoEchoTask& operator=(const CoEchoTask&) = delete;
 
     bool await_ready()
     {
@@ -132,6 +157,8 @@ struct CoEchoTask
     }
 
     void await_resume() const noexcept {}
+
+    void simple_resume() { v_selfHandle.resume(); }
 
 private:
     handle_type v_selfHandle = nullptr;    
