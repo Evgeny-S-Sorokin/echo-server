@@ -67,27 +67,9 @@ struct CoEchoTask
     struct CoEchoTaskPromise
     {
         using handle_type = std::coroutine_handle<CoEchoTaskPromise>;
-    
-        struct initial_suspend : public std::suspend_always
-        {};
 
-        struct final_suspend
-        {
-            bool await_ready() const noexcept { return false; }
-
-            void await_suspend(handle_type endingHandle) noexcept 
-            {
-                if (endingHandle.promise().v_awaitingHandle)
-                {
-                    endingHandle.promise().v_awaitingHandle.resume();
-                }
-            }
-
-            void await_resume() noexcept {}
-        };
-
-        initial_suspend initial_suspend() noexcept { return {}; }
-        final_suspend final_suspend() noexcept { return {}; }
+        std::suspend_never initial_suspend() noexcept { return {}; }
+        std::suspend_never final_suspend() noexcept { return {}; }
         void unhandled_exception() { std::terminate(); }
         CoEchoTask get_return_object() 
         { 
@@ -105,14 +87,12 @@ struct CoEchoTask
         }
 
         template<typename... Args>
-        void *operator new(std::size_t size, Args &&...args)
+        void *operator new(std::size_t size, Args &&...args) noexcept
         {
             auto buffer = std::malloc(size);
             std::cout << "CoEchoTask allocated...\n";
             return buffer;
         }
-
-        std::coroutine_handle<> v_awaitingHandle = nullptr;
     };
     using promise_type = CoEchoTaskPromise;
     using handle_type = CoEchoTaskPromise::handle_type;
@@ -144,21 +124,6 @@ struct CoEchoTask
 
     CoEchoTask(const CoEchoTask&) = delete;
     CoEchoTask& operator=(const CoEchoTask&) = delete;
-
-    bool await_ready()
-    {
-        return !v_selfHandle || v_selfHandle.done();
-    }
-
-    void await_suspend(std::coroutine_handle<> listenCoroutine) noexcept
-    {
-        v_selfHandle.resume();
-        v_selfHandle.promise().v_awaitingHandle = listenCoroutine;
-    }
-
-    void await_resume() const noexcept {}
-
-    void simple_resume() { v_selfHandle.resume(); }
 
 private:
     handle_type v_selfHandle = nullptr;    

@@ -1,12 +1,12 @@
 #pragma once
 
 #include "co_instruments/socket_awaiter.hpp"
-#include "co_instruments/co_socket_handle.hpp"
 #include "instruments/socket.hpp"
 
 #include "co_socket.hpp"
 
 #include <array>
+
 #include <cstring>
 
 namespace echo_servers

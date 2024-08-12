@@ -2,6 +2,7 @@ set(HEADERS
     include/co_instruments/awaiter.hpp
     include/co_instruments/socket_awaiter.hpp
     include/co_instruments/co_socket_handle.hpp
+    include/co_instruments/co_task_storage.hpp
     include/co_server/co_echo_socket.hpp
     include/co_server/co_listener_socket.hpp
     include/co_server/co_server.hpp)

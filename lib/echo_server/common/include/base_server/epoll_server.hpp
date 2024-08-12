@@ -2,7 +2,6 @@
 
 #include <concepts>
 #include <cstring>
-#include <iostream>
 
 #include <sys/epoll.h>
 

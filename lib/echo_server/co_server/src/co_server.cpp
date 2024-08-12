@@ -1,10 +1,9 @@
 #include "co_server/co_server.hpp"
 
-#include "co_instruments/co_routines.hpp"
-#include "co_server/co_echo_socket.hpp"
-#include "co_server/co_listener_socket.hpp"
 #include "co_instruments/co_socket_handle.hpp"
 #include "co_instruments/socket_awaiter.hpp"
+#include "co_server/co_echo_socket.hpp"
+#include "co_server/co_listener_socket.hpp"
 #include "instruments/socket.hpp"
 
 #include <iostream>
@@ -56,25 +55,13 @@ instruments::CoListenTask CoServer::Listen()
 {
     CoListenerSocket listener(12555);
     AddToEpoll(listener);
-    // Case for single connection. No extra allocations
-    /*
-    while (true)
-    {
-        auto newSocketFd 
-            = co_await instruments::SocketAwaiter(listener);
-        std::cout << "Accepted new connection on fd {" << newSocketFd << "}\n";
-        co_await EchoRecv(newSocketFd);
-    }
-    */
     std::unordered_map<int, instruments::CoEchoTask> tasks;
     while (true)
     {
         auto newSocketFd 
             = co_await instruments::SocketAwaiter(listener);
         std::cout << "Accepted new connection on fd {" << newSocketFd << "}\n";
-        auto newTask = EchoRecv(newSocketFd);
-        newTask.simple_resume();
-        tasks.insert_or_assign(newSocketFd, std::move(newTask));
+        tasks.insert_or_assign(newSocketFd, EchoRecv(newSocketFd));
     }
     
 }
